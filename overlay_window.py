@@ -1,25 +1,74 @@
 import os
 import gi
 import cairo
+import time
+import subprocess
 gi.require_version('Gtk', '4.0')
 gi.require_version('WebKit', '6.0')
 gi.require_version('Gtk4LayerShell', '1.0')
 from gi.repository import Gtk, Gdk, WebKit, GLib
 from gi.repository import Gtk4LayerShell
+from dbus.service import BusName, Object, signal, method
+from dbus import SessionBus
 
-from check_window_state import check_window_state
+def get_screen_resolution():
+    cmd = ['xrandr']
+    output = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0].decode('utf-8')
+    width = output.split('\n')[0].split(',')[1].split(' ')[2]
+    height = output.split('\n')[0].split(',')[1].split(' ')[4]
+    return (width, height)
+
+class OverlayService(Object):
+    def __init__(self, overlay):
+        self.overlay = overlay
+        bus_name = BusName('com.qlcd.OverlayService', bus=SessionBus())
+        super().__init__(bus_name, '/')
+
+    @method(dbus_interface='com.qlcd.OverlayService.ipc', signature='iiiii')
+    def adjust_window(self, is_active, x, y, width, height):
+        print(time.time(), is_active, x, y, width, height)
+        try:
+            GLib.idle_add(self._apply_adjustment, is_active, x, y, width, height)
+        except Exception as e:
+            print('idle_add failed:', e)
+
+    def _apply_adjustment(self, is_active, x, y, width, height):
+        try:
+            if is_active == 1:
+                self.overlay._show_overlay()
+                allocation = self.overlay.webview.get_allocation()
+                x_ = allocation.x
+                y_ = allocation.y
+                h = self.overlay.webview.get_height()
+                w = self.overlay.webview.get_width()
+                if w != width or h != height or x != x_ or y != y_:
+                    self.overlay.fixed.move(self.overlay.webview, x, y)
+                    self.overlay.webview.set_size_request(width, height)
+                    try:
+                        zoom = min(width / self.overlay.screen_width, height / self.overlay.screen_height)
+                        self.overlay.webview.set_zoom_level(zoom)
+                    except Exception as e:
+                        print('set_zoom_level failed:', e)
+            else:
+                self.overlay._hide_overlay()
+        except Exception as e:
+            print('apply_adjustment error:', e)
+        # return False so the idle callback runs only once
+        return False
+        
+
 
 class GameOverlay(Gtk.Application):
     def __init__(self):
         super().__init__(application_id="com.qlcd.tosuoverlay")
         self.connect('activate', self.on_activate)
         self.visible = True
+        self.dbus_service = None
 
     def on_activate(self, app):
         self.win = Gtk.ApplicationWindow(application=app, title="tosuoverlay")
         self.fixed = Gtk.Fixed()
         self.win.set_child(self.fixed)
-        
         self.win.set_decorated(False)
         display = Gdk.Display.get_default()
 
@@ -41,14 +90,15 @@ class GameOverlay(Gtk.Application):
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src/index.html")
         uri = GLib.filename_to_uri(path, None)
         self.webview.load_uri(uri)
-        info = check_window_state()
+        screen_res = get_screen_resolution()
         try:
-            self.screen_width = int(info[5])
-            self.screen_height = int(info[6])
-            self.webview.set_size_request(int(info[5]), int(info[6]))
-            self.win.set_default_size(int(info[5]), int(info[6]))
+            self.screen_width = screen_res[0]
+            self.screen_height = screen_res[1]
+            self.webview.set_size_request(screen_res[0], screen_res[1])
+            self.win.set_default_size(screen_res[0], screen_res[1])
         except Exception as e:
-            print(e)
+            self.screen_width = 1920
+            self.screen_height = 1080
             self.webview.set_size_request(1920, 1080)
             self.win.set_default_size(1920, 1080)
         self.fixed.put(self.webview, 0, 0)
@@ -60,9 +110,10 @@ class GameOverlay(Gtk.Application):
         
         # ensure the window cannot be interacted
         Gtk4LayerShell.set_keyboard_mode(self.win, Gtk4LayerShell.KeyboardMode.NONE)
-
+        self.dbus_service = OverlayService(self)
+        print("Overlay Service is running...")
         self.win.connect('realize', self._on_window_realize)
-        GLib.timeout_add(500, self._check_window) # check if the osu window is active
+        #GLib.timeout_add(500, self._check_window) # check if the osu window is active
         self.win.show()
         self.hold()
         
@@ -89,24 +140,3 @@ class GameOverlay(Gtk.Application):
             else:
                  self.win.set_visible(True)
             self.visible = True
-
-    def _check_window(self):
-        window_state = check_window_state()
-        try:
-            if self.visible and window_state[0] == "false":
-                self._hide_overlay()
-            if not self.visible and window_state[0] == "true":
-                self._show_overlay()
-            h = self.webview.get_height()
-            w = self.webview.get_width()
-            allocation = self.webview.get_allocation()
-            x = allocation.x
-            y = allocation.y
-            if w != int(window_state[3]) or h != int(window_state[4]) or x != int(window_state[1]) or y != int(window_state[2]):
-                self.fixed.move(self.webview, int(window_state[1]), int(window_state[2]))
-                self.webview.set_size_request(int(window_state[3]), int(window_state[4]))
-                self.webview.set_zoom_level(min(int(window_state[3]) / self.screen_width, int(window_state[4]) / self.screen_height))
-        except Exception as e:
-            print(e)
-        return True
-
