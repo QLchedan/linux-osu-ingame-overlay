@@ -8,7 +8,6 @@ This overlay is compatible only with KDE Plasma and has been tested exclusively 
 
 ## Known Issues
 - The overlay does not function correctly when the game is set to fullscreen mode (whether native or borderless). Currently I have no idea how to fix that, so the overlay is limited to windowed mode only.
-- The auto show/hide function may be kinda slow due to the inefficient method used to fetch osu! window data, which relies on a polling cycle of 500ms.
 
 ## How to Use
 
@@ -16,7 +15,7 @@ This overlay is compatible only with KDE Plasma and has been tested exclusively 
 
 #### Arch Linux:
 ```bash
-sudo pacman -Syu --needed gtk4 webkit2gtk python-gobject python-cairo gtk-layer-shell qt5-tools
+sudo pacman -Syu --needed gtk4 webkit2gtk python-gobject python-cairo gtk-layer-shell
 ```
 
 #### Debian/Ubuntu (not tested, but expected to work):
@@ -32,10 +31,13 @@ Open **System Settings**, go to **Window Management** and then **Window Rules**.
 ![example](img/windowrules_en.png)
 Don't forget to click **Apply** after completing the configuration.
 
-### 4. Customize the Overlay
+### 4. Install KWin Script
+Download kwinscript.zip from the Release page and install the script via System Settings.
+
+### 5. Customize the Overlay
 Edit the `src/index.html` file to customize your overlay. Imagine a 1920x1080 canvas and place fixed elements on it using something like `</iframe>`. The default file includes the [osumania_map_analyser](https://github.com/LeoBlackMT/osumania_map_analyser/tree/main) created by [Leo_Black](https://github.com/LeoBlackMT) (which is an excellent tool for mania players)
 
-### 5. Run the Application
+### 6. Run the Application
 Open osu! and run the application using the following command:
 ```bash
 ./tosuoverlay
