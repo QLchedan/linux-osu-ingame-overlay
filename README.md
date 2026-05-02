@@ -1,7 +1,7 @@
 # linux-tosu-ingame-overlay
 [中文](README_CN.md)|English
 
-A tosu/gosumemory in-game overlay for Linux.
+A gtk4 implement of tosu/gosumemory in-game overlay for Linux.
 
 ## Notice
 This overlay is compatible only with KDE Plasma and has been tested exclusively on osu-winello (osu!stable) and Arch Linux. Compatibility with osu!lazer and other Linux distributions is uncertain.
