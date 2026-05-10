@@ -1,0 +1,21 @@
+{
+    "KPlugin": {
+        "Name": "osuoverlay",
+        "Description": "To fetch the osu! window data.",
+        "Icon": "preferences-system-windows",
+
+        "Authors": [
+            {
+                "Email": "qlchedan@gmail.com",
+                "Name": "qlchedan"
+            }
+        ],
+        "Id": "osuoverlay",
+        "Version": "1.0",
+        "License": "MIT",
+        "Website": "https://github.com/QLchedan/linux-tosu-ingame-overlay"
+    },
+    "X-Plasma-API": "javascript",
+    "X-Plasma-MainScript": "code/main.js",
+    "KPackageStructure": "KWin/Script"
+}
