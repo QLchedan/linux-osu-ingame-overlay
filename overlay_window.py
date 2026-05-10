@@ -8,7 +8,7 @@ gi.require_version('WebKit', '6.0')
 gi.require_version('Gtk4LayerShell', '1.0')
 from gi.repository import Gtk, Gdk, WebKit, GLib
 from gi.repository import Gtk4LayerShell
-from dbus.service import BusName, Object, signal, method
+from dbus.service import BusName, Object, method
 from dbus import SessionBus
 
 def get_screen_resolution():
@@ -26,7 +26,6 @@ class OverlayService(Object):
 
     @method(dbus_interface='com.qlcd.OverlayService.ipc', signature='iiiii')
     def adjust_window(self, is_active, x, y, width, height):
-        print(time.time(), is_active, x, y, width, height)
         try:
             GLib.idle_add(self._apply_adjustment, is_active, x, y, width, height)
         except Exception as e:
@@ -53,20 +52,19 @@ class OverlayService(Object):
                 self.overlay._hide_overlay()
         except Exception as e:
             print('apply_adjustment error:', e)
-        # return False so the idle callback runs only once
         return False
         
 
 
 class GameOverlay(Gtk.Application):
     def __init__(self):
-        super().__init__(application_id="com.qlcd.tosuoverlay")
+        super().__init__(application_id="com.qlcd.osuoverlay")
         self.connect('activate', self.on_activate)
         self.visible = True
         self.dbus_service = None
 
     def on_activate(self, app):
-        self.win = Gtk.ApplicationWindow(application=app, title="tosuoverlay")
+        self.win = Gtk.Window(application=app, title="osuoverlay")
         self.fixed = Gtk.Fixed()
         self.win.set_child(self.fixed)
         self.win.set_decorated(False)
@@ -90,8 +88,9 @@ class GameOverlay(Gtk.Application):
         path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "src/index.html")
         uri = GLib.filename_to_uri(path, None)
         self.webview.load_uri(uri)
-        screen_res = get_screen_resolution()
         try:
+            screen_res = get_screen_resolution()
+        
             self.screen_width = screen_res[0]
             self.screen_height = screen_res[1]
             self.webview.set_size_request(screen_res[0], screen_res[1])
@@ -102,18 +101,28 @@ class GameOverlay(Gtk.Application):
             self.webview.set_size_request(1920, 1080)
             self.win.set_default_size(1920, 1080)
         self.fixed.put(self.webview, 0, 0)
-        self.win.set_child(self.webview)
 
         # setting up layer shell
         Gtk4LayerShell.init_for_window(self.win)
         Gtk4LayerShell.set_layer(self.win, Gtk4LayerShell.Layer.OVERLAY)
         
+        Gtk4LayerShell.set_anchor(self.win, Gtk4LayerShell.Edge.TOP, True)
+        Gtk4LayerShell.set_anchor(self.win, Gtk4LayerShell.Edge.BOTTOM, True)
+        Gtk4LayerShell.set_anchor(self.win, Gtk4LayerShell.Edge.LEFT, True)
+        Gtk4LayerShell.set_anchor(self.win, Gtk4LayerShell.Edge.RIGHT, True)
+        
+        Gtk4LayerShell.set_margin(self.win, Gtk4LayerShell.Edge.TOP, 0)
+        Gtk4LayerShell.set_margin(self.win, Gtk4LayerShell.Edge.BOTTOM, 0)
+        Gtk4LayerShell.set_margin(self.win, Gtk4LayerShell.Edge.LEFT, 0)
+        Gtk4LayerShell.set_margin(self.win, Gtk4LayerShell.Edge.RIGHT, 0)
+        
+        Gtk4LayerShell.set_exclusive_zone(self.win, 0)
+        
+        
         # ensure the window cannot be interacted
         Gtk4LayerShell.set_keyboard_mode(self.win, Gtk4LayerShell.KeyboardMode.NONE)
         self.dbus_service = OverlayService(self)
-        print("Overlay Service is running...")
         self.win.connect('realize', self._on_window_realize)
-        #GLib.timeout_add(500, self._check_window) # check if the osu window is active
         self.win.show()
         self.hold()
         
