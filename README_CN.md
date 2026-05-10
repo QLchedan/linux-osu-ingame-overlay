@@ -16,7 +16,7 @@
 
 #### Arch Linux:
 ```bash
-sudo pacman -Syu --needed gtk4 webkit2gtk python-gobject python-cairo gtk-layer-shell qt5-tools
+sudo pacman -Syu --needed gtk4 webkit2gtk python-gobject python-cairo gtk-layer-shell
 ```
 
 #### Debian/Ubuntu (没测试过，应该能用):
