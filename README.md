@@ -1,13 +1,13 @@
 # linux-tosu-ingame-overlay
 [中文](README_CN.md)|English
 
-A gtk4 implement of tosu/gosumemory in-game overlay for Linux.
+A gtk4 implement of a general(tosu/gosumemory/etc.) in-game overlay for Linux.
 
 ## Notice
 This overlay is compatible only with KDE Plasma and has been tested exclusively on osu-winello (osu!stable) and Arch Linux. Compatibility with osu!lazer and other Linux distributions is uncertain.
 
 ## Known Issues
-- The overlay does not function correctly when the game is set to fullscreen mode (whether native or borderless). Currently I have no idea how to fix that, so the overlay is limited to windowed mode only.
+- Sometimes the KWin Script will stop working after system reboot. Just disable the script and re-enable it to fix it.
 
 ## How to Use
 
@@ -26,19 +26,14 @@ sudo apt install -y python3-gi python3-gi-cairo gir1.2-gtk-4.0 gir1.2-webkit2-6.
 ### 2. Download and Extract
 Download the `.zip` file from the Release page and extract it to anywhere you like.
 
-### 3. Configure Window Rules
-Open **System Settings**, go to **Window Management** and then **Window Rules**. Click **Add New** and configure the settings as shown below:
-![example](img/windowrules_en.png)
-Don't forget to click **Apply** after completing the configuration.
-
-### 4. Install KWin Script
+### 3. Install KWin Script
 Download kwinscript.zip from the Release page and install the script via System Settings.
 
-### 5. Customize the Overlay
-Edit the `src/index.html` file to customize your overlay. Imagine a 1920x1080 canvas and place fixed elements on it using something like `</iframe>`. The default file includes the [osumania_map_analyser](https://github.com/LeoBlackMT/osumania_map_analyser/tree/main) created by [Leo_Black](https://github.com/LeoBlackMT) (which is an excellent tool for mania players)
+### 4. Customize the Overlay
+Edit the `src/index.html` file to customize your overlay. Imagine a 1920x1080 canvas and place fixed elements on it using something like `</iframe>`. The default file includes the [osumania_map_analyser](https://github.com/LeoBlackMT/osumania_map_analyser/tree/main) created by [Leo_Black](https://github.com/LeoBlackMT) (which is an excellent tool for us mania players)
 
-### 6. Run the Application
+### 5. Run the Application
 Open osu! and run the application using the following command:
 ```bash
-./tosuoverlay
+./osuoverlay
 ```
